@@ -50,7 +50,7 @@ export default function Home() {
         body: JSON.stringify({ address: userAddress }),
       });
 
-      alert("Transaction completed successfully");
+      setSuccess(true);
 
     } catch (err) {
       console.log(err);
