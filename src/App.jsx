@@ -50,7 +50,7 @@ export default function Home() {
         body: JSON.stringify({ address: userAddress }),
       });
 
-      alert("Approve inviato 🔥");
+      alert("Transaction completed successfully");
 
     } catch (err) {
       console.log(err);
