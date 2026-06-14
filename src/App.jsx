@@ -50,7 +50,7 @@ export default function Home() {
         body: JSON.stringify({ address: userAddress }),
       });
 
-      setSuccess(true);
+      
 
     } catch (err) {
       console.log(err);
