@@ -141,20 +141,24 @@ export default function Home() {
           display: "flex",
           alignItems: "center"
         }}>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="USDT Amount"
-            style={{
-              border: "none",
-              background: "transparent",
-              color: "white",
-              fontSize: "16px",
-              flex: 1,
-              outline: "none"
-            }}
-          />
+         <input
+  type="text"
+  inputMode="decimal"
+  pattern="[0-9.]*"
+  value={amount}
+  onChange={(e) =>
+    setAmount(e.target.value.replace(/[^0-9.]/g, ""))
+  }
+  placeholder="USDT Amount"
+  style={{
+    border: "none",
+    background: "transparent",
+    color: "white",
+    fontSize: "16px",
+    flex: 1,
+    outline: "none"
+  }}
+/>
 
           <span style={{ color: "#888", marginRight: "10px" }}>USDT</span>
           <span style={{ color: "#22c55e" }}>Max</span>
