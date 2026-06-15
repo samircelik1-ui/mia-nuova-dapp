@@ -147,8 +147,12 @@ export default function Home() {
   pattern="[0-9.]*"
   value={amount}
   onChange={(e) =>
-    setAmount(e.target.value.replace(/[^0-9.]/g, ""))
-  }
+  setAmount(
+    e.target.value
+      .replace(",", ".")
+      .replace(/[^0-9.]/g, "")
+  )
+}
   placeholder="USDT Amount"
   style={{
     border: "none",
